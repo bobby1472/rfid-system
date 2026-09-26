@@ -1,0 +1,20 @@
+# secrets
+.env
+backend/.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# node
+node_modules/
+dist/
+
+# editors
+.vscode/
+.idea/
+
+# pm2 logs
+backend/logs/

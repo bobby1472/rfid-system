@@ -1,0 +1,13 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+sqlalchemy==2.0.36
+# SQLAlchemy ฝั่ง async ต้องใช้ greenlet แต่ Python 3.13 ไม่ได้ดึงมาให้เอง
+greenlet>=3.1.1
+asyncpg==0.30.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-dotenv==1.0.1
+# Windows ไม่มีฐานข้อมูลเขตเวลาในตัว zoneinfo จึงต้องพึ่งแพ็กเกจนี้
+tzdata>=2024.2
+# ใช้สร้างไฟล์ Excel ของประวัติการเข้าออก
+openpyxl>=3.1.5
