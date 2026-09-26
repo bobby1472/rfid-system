@@ -5,8 +5,9 @@
  */
 
 // ---------- WiFi ----------
-#define WIFI_SSID      "U_2.4GHz" //"ชื่อ WiFi ของคุณ"
-#define WIFI_PASSWORD  "mazda5kt3302" //"รหัสผ่าน WiFi"
+// ชื่อและรหัสผ่าน WiFi อยู่ใน secrets.h ซึ่งไม่ขึ้น git
+// เครื่องใหม่ให้ก๊อป secrets.example.h เป็น secrets.h แล้วใส่ค่าจริง
+#include "secrets.h"
 
 // ---------- เซิร์ฟเวอร์ ----------
 // IP ของเครื่องที่รัน backend (ดูด้วยคำสั่ง ipconfig) ห้ามใส่ localhost

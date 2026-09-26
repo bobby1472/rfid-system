@@ -18,6 +18,7 @@ NodeMCU + RC522  ──WiFi/HTTP──>  FastAPI  ──>  PostgreSQL
 | `backend/` | FastAPI + SQLAlchemy async + asyncpg |
 | `frontend/` | React 18 + Vite |
 | `firmware/RFID_Station_WiFi/` | โค้ด Arduino สำหรับ NodeMCU |
+| `database/` | สคริปต์ SQL สร้างฐานข้อมูลและตาราง (ดู [database/README.md](database/README.md)) |
 
 ## ตารางในฐานข้อมูล
 
@@ -61,6 +62,8 @@ python -m venv .venv
 .venv\Scripts\python.exe setup_db.py
 ```
 
+ถ้าไม่อยากใช้ Python หรือให้ DBA รันเอง ใช้ไฟล์ SQL ใน [`database/`](database/README.md) แทนได้ ผลเหมือนกัน
+
 สคริปต์จะสร้างฐานข้อมูลชื่อ `rfid-system` ให้เอง ถ้ามีอยู่แล้วก็จะข้ามไป
 
 ### 3. เริ่ม backend
@@ -83,14 +86,28 @@ npm run dev
 
 ### 5. เฟิร์มแวร์
 
-แก้ `firmware/RFID_Station_WiFi/config.h`:
+**ชื่อและรหัสผ่าน WiFi** อยู่ในไฟล์ `secrets.h` ซึ่งไม่ขึ้น git เครื่องที่ยังไม่มีไฟล์นี้ให้ก๊อปจากแม่แบบก่อน:
+
+```
+cd firmware\RFID_Station_WiFi
+copy secrets.example.h secrets.h
+```
+
+แล้วแก้ `secrets.h`:
 
 ```c
 #define WIFI_SSID      "ชื่อ WiFi"
 #define WIFI_PASSWORD  "รหัสผ่าน"
-#define API_HOST       "192.168.1.100"   // IP ของเครื่องที่รัน backend
-#define DEVICE_ID      "WC09"            // รหัสเครื่องอ่านตัวนี้
 ```
+
+**ค่าอื่น** แก้ใน `config.h` (ไฟล์นี้ commit ได้ ไม่มีรหัสผ่าน):
+
+```c
+#define API_HOST       "192.168.1.100"   // IP ของเครื่องที่รัน backend
+#define DEVICE_ID      "WC09"            // รหัสเครื่องอ่านตัวนี้ ห้ามซ้ำกับเครื่องอื่น
+```
+
+ถ้าคอมไพล์แล้วขึ้น `secrets.h: No such file or directory` แปลว่ายังไม่ได้ก๊อปแม่แบบ
 
 หา IP ของเครื่องด้วยคำสั่ง `ipconfig` แล้วดูค่า IPv4 Address
 **ห้ามใส่ `localhost`** เพราะ localhost ของ ESP8266 คือตัวมันเอง
