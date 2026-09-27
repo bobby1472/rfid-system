@@ -14,6 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 _COLUMNS = [
     ("readers", "mac", "VARCHAR(17)"),
     ("readers", "registered", "BOOLEAN NOT NULL DEFAULT false"),
+    # สุขภาพของเครื่อง - 04_migrate_reader_health.sql
+    ("readers", "firmware", "VARCHAR(32)"),
+    ("readers", "rc522_ok", "BOOLEAN"),
+    ("readers", "rc522_recoveries", "INTEGER"),
+    ("readers", "rc522_recoveries_total", "INTEGER NOT NULL DEFAULT 0"),
+    ("readers", "uptime_s", "INTEGER"),
 ]
 
 # ดัชนีที่ต้องมีคู่กับคอลัมน์ใหม่

@@ -104,6 +104,11 @@ class ReaderOut(ReaderBase):
     id: int
     code: str
     registered: bool
+    firmware: str | None = None
+    rc522_ok: bool | None = None
+    rc522_recoveries: int | None = None
+    rc522_recoveries_total: int = 0
+    uptime_s: int | None = None
     last_seen_at: datetime | None
     last_ip: str | None
     created_at: datetime
@@ -200,6 +205,10 @@ class AnnounceIn(BaseModel):
     device_id: str = Field(min_length=1, max_length=32)
     mac: str | None = Field(default=None, max_length=17)
     firmware: str | None = Field(default=None, max_length=32)
+    # สุขภาพของ RC522 ส่งมาตั้งแต่เฟิร์มแวร์ 1.2 ขึ้นไป
+    rc522_ok: bool | None = None
+    rc522_recoveries: int | None = Field(default=None, ge=0)
+    uptime_s: int | None = Field(default=None, ge=0)
 
     @field_validator("device_id")
     @classmethod

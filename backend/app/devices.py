@@ -68,6 +68,46 @@ async def touch_reader(
     return reader
 
 
+def record_health(
+    reader: Reader,
+    firmware: str | None,
+    rc522_ok: bool | None,
+    recoveries: int | None,
+    uptime_s: int | None,
+) -> None:
+    """บันทึกสุขภาพที่บอร์ดรายงานมา และสะสมยอดการกู้ RC522 ไว้ข้ามการรีสตาร์ท
+
+    ตัวนับในบอร์ดอยู่ใน RAM จึงกลับเป็น 0 ทุกครั้งที่บอร์ดรีสตาร์ท ซึ่งเกิดวันละครั้ง
+    จากการรีสตาร์ทอัตโนมัติ ถ้าเก็บแค่ค่าล่าสุดจะดูไม่ออกว่าเครื่องไหนหลุดบ่อยในระยะยาว
+
+    วิธีสะสม: ถ้าบอร์ดยังไม่รีสตาร์ท บวกเฉพาะส่วนที่เพิ่มขึ้นจากครั้งก่อน
+    ถ้ารีสตาร์ทไปแล้ว บวกค่าที่ส่งมาทั้งหมด เพราะเป็นการนับใหม่ตั้งแต่บูต
+
+    ตรวจการรีสตาร์ทจาก uptime ที่ลดลงเป็นหลัก ไม่ใช่จากตัวนับที่ลดลงอย่างเดียว
+    เพราะถ้าบอร์ดรีสตาร์ทแล้วกู้ RC522 ได้หลายครั้งก่อนประกาศตัวรอบแรก ตัวนับอาจไม่ได้ลดลง
+    เช่น ก่อนรีสตาร์ทนับได้ 2 หลังรีสตาร์ทนับได้ 3 ถ้าดูแค่ตัวนับจะบวกเพิ่มแค่ 1 ซึ่งผิด
+    """
+    if firmware:
+        reader.firmware = firmware
+    if rc522_ok is not None:
+        reader.rc522_ok = rc522_ok
+
+    if recoveries is not None:
+        prev = reader.rc522_recoveries
+        prev_uptime = reader.uptime_s
+        rebooted = (
+            prev is None
+            or recoveries < prev
+            or (uptime_s is not None and prev_uptime is not None and uptime_s < prev_uptime)
+        )
+        delta = recoveries if rebooted else recoveries - prev
+        reader.rc522_recoveries_total = (reader.rc522_recoveries_total or 0) + delta
+        reader.rc522_recoveries = recoveries
+
+    if uptime_s is not None:
+        reader.uptime_s = uptime_s
+
+
 def client_ip(request) -> str | None:
     """IP จริงของอุปกรณ์
 

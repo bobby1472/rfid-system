@@ -47,32 +47,45 @@ COMMENT ON COLUMN cards.active  IS 'false = card rejected at every reader';
 -- readers : เครื่องอ่าน RC522 แต่ละตัว เช่น WC05, WC07, WC09
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS readers (
-    id            SERIAL        PRIMARY KEY,
+    id                      SERIAL        PRIMARY KEY,
     -- รหัสที่เฟิร์มแวร์ส่งมาใน device_id ตรงกับ DEVICE_ID ใน config.h
-    code          VARCHAR(32)   NOT NULL,
+    code                    VARCHAR(32)   NOT NULL,
     -- MAC ของบอร์ด ติดกับฮาร์ดแวร์ถาวร ไม่เปลี่ยนตาม DHCP เหมือน IP
-    mac           VARCHAR(17),
+    mac                     VARCHAR(17),
     -- false = บอร์ดประกาศตัวเข้ามาเองแต่ยังไม่มีคนกด Add reader ในหน้าเว็บ
-    registered    BOOLEAN       NOT NULL DEFAULT false,
-    name          VARCHAR(120),
-    location      VARCHAR(120),
-    note          TEXT,
-    active        BOOLEAN       NOT NULL DEFAULT true,
+    registered              BOOLEAN       NOT NULL DEFAULT false,
+    name                    VARCHAR(120),
+    location                VARCHAR(120),
+    note                    TEXT,
+    active                  BOOLEAN       NOT NULL DEFAULT true,
     -- อัปเดตทุกครั้งที่บอร์ดยิงข้อมูลเข้ามา ทั้งตอนแตะบัตรและตอนประกาศตัวทุก 5 นาที
-    last_seen_at  TIMESTAMPTZ,
-    last_ip       VARCHAR(45),
-    created_at    TIMESTAMPTZ   NOT NULL DEFAULT now(),
-    updated_at    TIMESTAMPTZ   NOT NULL DEFAULT now()
+    last_seen_at            TIMESTAMPTZ,
+    last_ip                 VARCHAR(45),
+    -- สุขภาพของเครื่องที่บอร์ดส่งมากับการประกาศตัว ค่าว่าง = เฟิร์มแวร์รุ่นเก่าที่ยังไม่รายงาน
+    firmware                VARCHAR(32),
+    rc522_ok                BOOLEAN,
+    -- ตัวนับในบอร์ด กลับเป็น 0 ทุกครั้งที่บอร์ดรีสตาร์ท
+    rc522_recoveries        INTEGER,
+    -- ยอดสะสมข้ามการรีสตาร์ท backend เป็นคนบวกให้ (backend/app/devices.py record_health)
+    rc522_recoveries_total  INTEGER       NOT NULL DEFAULT 0,
+    uptime_s                INTEGER,
+    created_at              TIMESTAMPTZ   NOT NULL DEFAULT now(),
+    updated_at              TIMESTAMPTZ   NOT NULL DEFAULT now()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS ix_readers_code ON readers (code);
 CREATE UNIQUE INDEX IF NOT EXISTS ix_readers_mac  ON readers (mac);
 
-COMMENT ON TABLE  readers            IS 'RFID reader stations (NodeMCU + RC522)';
-COMMENT ON COLUMN readers.code       IS 'Station code sent by the firmware as device_id, e.g. WC09';
-COMMENT ON COLUMN readers.mac        IS 'Board MAC address, AA:BB:CC:DD:EE:FF';
-COMMENT ON COLUMN readers.registered IS 'false = discovered on the network but not yet confirmed in the web app';
-COMMENT ON COLUMN readers.active     IS 'false = this reader rejects every card';
+COMMENT ON TABLE  readers                        IS 'RFID reader stations (NodeMCU + RC522)';
+COMMENT ON COLUMN readers.code                   IS 'Station code sent by the firmware as device_id, e.g. WC09';
+COMMENT ON COLUMN readers.mac                    IS 'Board MAC address, AA:BB:CC:DD:EE:FF';
+COMMENT ON COLUMN readers.registered             IS 'false = discovered on the network but not yet confirmed in the web app';
+COMMENT ON COLUMN readers.active                 IS 'false = this reader rejects every card';
+COMMENT ON COLUMN readers.firmware               IS 'Firmware version reported by the board';
+COMMENT ON COLUMN readers.rc522_ok               IS 'RC522 health at the last report; NULL = firmware too old to report';
+COMMENT ON COLUMN readers.rc522_recoveries       IS 'RC522 self-recoveries since the board last restarted';
+COMMENT ON COLUMN readers.rc522_recoveries_total IS 'RC522 self-recoveries accumulated across restarts';
+COMMENT ON COLUMN readers.uptime_s               IS 'Seconds since the board restarted, at the last report';
 
 
 -- ---------------------------------------------------------------------

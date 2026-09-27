@@ -5,6 +5,11 @@ import Pagination from '../components/Pagination.jsx'
 
 const EMPTY = { code: '', mac: '', name: '', location: '', note: '', active: true }
 const PAGE_SIZE = 20
+// บอร์ดประกาศตัวทุก 5 นาที (ANNOUNCE_INTERVAL_MS) ถ้าเงียบเกินสองรอบแปลว่าหลุดไปแล้ว
+// สถานะ RC522 ที่เห็นเป็นค่าเก่าค้างอยู่ ห้ามโชว์เป็นสีเขียวให้เข้าใจผิดว่ายังปกติ
+const STALE_SECS = 11 * 60
+
+const secondsSince = (iso) => (iso ? (Date.now() - new Date(iso).getTime()) / 1000 : Infinity)
 
 export default function ReadersPage({ onChanged }) {
   const { t } = useLang()
@@ -40,6 +45,31 @@ export default function ReadersPage({ onChanged }) {
     if (secs < 3600) return t('reader.minutesAgo', { n: Math.floor(secs / 60) })
     if (secs < 86400) return t('reader.hoursAgo', { n: Math.floor(secs / 3600) })
     return t('reader.daysAgo', { n: Math.floor(secs / 86400) })
+  }
+
+  const duration = (secs) => {
+    const d = Math.floor(secs / 86400)
+    const h = Math.floor((secs % 86400) / 3600)
+    const m = Math.floor((secs % 3600) / 60)
+    if (d > 0) return t('reader.durDH', { d, h })
+    if (h > 0) return t('reader.durHM', { h, m })
+    return t('reader.durM', { m })
+  }
+
+  const rc522Badge = (r) => {
+    if (r.rc522_ok == null) {
+      return <span className="badge off" title={t('reader.rc522Unknown')}>—</span>
+    }
+    const stale = secondsSince(r.last_seen_at) > STALE_SECS
+    const tone = stale ? 'off' : r.rc522_ok ? 'ok' : 'deny'
+    return (
+      <span
+        className={'badge ' + tone}
+        title={stale ? t('reader.rc522Stale', { ago: since(r.last_seen_at) }) : undefined}
+      >
+        {r.rc522_ok ? t('reader.rc522Ok') : t('reader.rc522Error')}
+      </span>
+    )
   }
 
   // silent: การดึงอัตโนมัติทุก 5 วินาที ถ้าพังไม่ต้องขึ้นแถบแดงซ้ำ ๆ
@@ -248,6 +278,9 @@ export default function ReadersPage({ onChanged }) {
               <tr>
                 <th>{t('reader.code')}</th><th>{t('reader.mac')}</th><th>{t('reader.name')}</th>
                 <th>{t('reader.location')}</th><th>{t('reader.status')}</th>
+                <th>{t('reader.rc522')}</th>
+                <th title={t('reader.recoveriesHint')}>{t('reader.recoveries')}</th>
+                <th>{t('reader.firmware')}</th>
                 <th>{t('reader.lastSeen')}</th><th>{t('reader.ip')}</th><th></th>
               </tr>
             </thead>
@@ -262,6 +295,29 @@ export default function ReadersPage({ onChanged }) {
                     <span className={'badge ' + (r.active ? 'ok' : 'off')}>
                       {r.active ? t('status.active') : t('status.off')}
                     </span>
+                  </td>
+                  <td>{rc522Badge(r)}</td>
+                  <td title={t('reader.recoveriesHint')}>
+                    {r.rc522_recoveries == null && !r.rc522_recoveries_total ? '-' : (
+                      <>
+                        <span className={'count' + (r.rc522_recoveries_total > 0 ? ' is-warn' : '')}>
+                          {r.rc522_recoveries_total}
+                        </span>
+                        {r.rc522_recoveries != null && (
+                          <div className="cell-hint">
+                            {t('reader.recoveriesSinceBoot', { n: r.rc522_recoveries })}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <span className="mono">{r.firmware || '-'}</span>
+                    {r.uptime_s != null && (
+                      <div className="cell-hint" title={t('reader.uptimeHint')}>
+                        {t('reader.uptime', { d: duration(r.uptime_s) })}
+                      </div>
+                    )}
                   </td>
                   <td>{since(r.last_seen_at)}</td>
                   <td className="mono">{r.last_ip || '-'}</td>

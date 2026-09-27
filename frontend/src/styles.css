@@ -19,6 +19,8 @@
     --border: #d9dde5;
     --text: #1a1d23;
     --muted: #616a79;
+    /* สีส้มของโหมดมืดอ่านไม่ออกบนพื้นขาว */
+    --warn: #b36b00;
   }
 }
 
@@ -89,6 +91,11 @@ tr:last-child td { border-bottom: none; }
 .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
 
 .table-wrap { overflow-x: auto; }
+
+/* ตัวเลขในตาราง เช่นจำนวนครั้งที่กู้ RC522 - ถ้ามากกว่า 0 ให้เป็นสีเตือนจะได้สะดุดตา */
+.count { font-weight: 600; font-variant-numeric: tabular-nums; }
+.count.is-warn { color: var(--warn); }
+.cell-hint { color: var(--muted); font-size: 11px; margin-top: 2px; white-space: nowrap; }
 
 @media (max-width: 640px) {
   .app { padding: 16px 12px 48px; }

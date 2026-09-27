@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -28,6 +28,17 @@ class Reader(Base):
     # อัปเดตทุกครั้งที่เครื่องยิงข้อมูลเข้ามา ใช้ดูว่าเครื่องไหนยังออนไลน์
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
     last_ip: Mapped[str | None] = mapped_column(String(45), default=None)
+
+    # ---- สุขภาพของเครื่อง บอร์ดรายงานมากับการประกาศตัว (เฟิร์มแวร์ 1.2 ขึ้นไป) ----
+    # เป็น NULL สำหรับเครื่องที่ยังใช้เฟิร์มแวร์รุ่นเก่า ซึ่งไม่ได้ส่งค่าพวกนี้มา
+    firmware: Mapped[str | None] = mapped_column(String(32), default=None)
+    rc522_ok: Mapped[bool | None] = mapped_column(Boolean, default=None)
+    # ตัวนับในบอร์ด นับตั้งแต่บูตครั้งล่าสุด รีเซ็ตเป็น 0 ทุกครั้งที่บอร์ดรีสตาร์ท
+    rc522_recoveries: Mapped[int | None] = mapped_column(Integer, default=None)
+    # ยอดสะสมที่ backend รวมไว้เอง ไม่หายเวลาบอร์ดรีสตาร์ท ใช้ดูว่าเครื่องไหนหลุดบ่อย
+    rc522_recoveries_total: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # ใช้ตรวจว่าบอร์ดรีสตาร์ทไปหรือยัง (ถ้าค่าน้อยลง) เพื่อสะสมยอดรวมให้ถูก
+    uptime_s: Mapped[int | None] = mapped_column(Integer, default=None)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

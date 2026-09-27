@@ -3,7 +3,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
-from ..devices import client_ip, touch_reader
+from ..devices import client_ip, record_health, touch_reader
 from ..errors import commit_or_conflict, guard_unique, not_found
 from ..models import Reader
 from ..schemas import (
@@ -46,6 +46,13 @@ async def announce(payload: AnnounceIn, request: Request, session: AsyncSession 
     โดยไม่ต้องรอให้ใครเอาบัตรมาแตะก่อน
     """
     reader = await touch_reader(session, payload.device_id, payload.mac, client_ip(request))
+    record_health(
+        reader,
+        firmware=payload.firmware,
+        rc522_ok=payload.rc522_ok,
+        recoveries=payload.rc522_recoveries,
+        uptime_s=payload.uptime_s,
+    )
     await commit_or_conflict(session)
     await session.refresh(reader)
     return AnnounceOut(
